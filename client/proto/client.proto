@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package client;
+
+option go_package = "./proto;proto";
+
+import "google/protobuf/timestamp.proto";
+
+service BulkaVPNService {
+  rpc CreateClient (CreateClientRequest) returns (CreateClientResponse);
+  rpc SearchClients (SearchClientsRequest) returns (SearchClientsResponse);
+  rpc DeleteClient (DeleteClientRequest) returns (DeleteClientResponse);
+  rpc GetClient (GetClientRequest) returns (GetClientResponse);
+  rpc UpdateClient (UpdateClientRequest) returns (UpdateClientResponse);
+  rpc CountClients (CountClientsRequest) returns (CountClientsResponse);
+}
+
+message CreateClientRequest {
+  string country_server = 1;
+  string trial = 2;
+}
+
+message CreateClientResponse {
+  string ovpn_config = 1;
+  string client_id = 2;
+  google.protobuf.Timestamp time_left = 3;
+}
+
+message SearchClientsRequest {
+  ClientFilter filter = 1;
+}
+
+message SearchClientsResponse {
+  repeated Client clients = 1;
+}
+
+message DeleteClientRequest {
+  string client_id = 1;
+}
+
+message DeleteClientResponse {}
+
+message GetClientRequest {
+  string client_id = 1;
+  string ovpn_config = 2;
+}
+
+message GetClientResponse {
+  Client clients = 1;
+}
+
+message UpdateClientRequest {
+  string client_id = 1;
+  string country_server = 2;
+}
+
+message UpdateClientResponse {
+  string country_server = 1;
+  google.protobuf.Timestamp time_left = 5;
+}
+
+message CountClientsRequest {
+    ClientFilter filter = 1;
+}
+
+message CountClientsResponse {
+  int32 count = 1;
+}
+
+message Client {
+  string client_id = 1;
+
+  int64 ver = 2;
+
+  string ovpn_config = 4;
+  string country_server = 5;
+
+  google.protobuf.Timestamp connected_since = 6;
+  google.protobuf.Timestamp time_left = 7;
+}
+
+message ClientFilter {
+  repeated string client_id = 1;
+  repeated string ovpn_config = 2;
+  string country_server = 3;
+}

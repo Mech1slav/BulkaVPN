@@ -1,0 +1,20 @@
+package converter
+
+import (
+	"BulkaVPN/client/internal"
+	pb "BulkaVPN/client/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
+)
+
+func Clients(i *internal.Client) *pb.Client {
+	res := &pb.Client{
+		ClientId:       i.ClientID,
+		Ver:            i.Ver,
+		OvpnConfig:     i.OvpnConfig,
+		CountryServer:  i.CountryServer,
+		ConnectedSince: timestamppb.New(i.ConnectedSince),
+		TimeLeft:       timestamppb.New(i.TimeLeft),
+	}
+
+	return res
+}
