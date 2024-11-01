@@ -169,31 +169,3 @@ func (r *clientRepo) Count(ctx context.Context, opts repository.ClientSearchOpts
 
 	return count, nil
 }
-
-func (r *clientRepo) GetUserByTelegramID(ctx context.Context, telegramID int64) (*repository.User, error) {
-	filter := bson.M{"telegram_id": telegramID}
-	var user repository.User
-
-	err := r.collection.FindOne(ctx, filter).Decode(&user)
-	if err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("clientRepo.GetUserByTelegramID: failed to find user: %w", err)
-	}
-
-	return &user, nil
-}
-
-func (r *clientRepo) SaveUser(ctx context.Context, user *repository.User) error {
-	filter := bson.M{"telegram_id": user.TelegramID}
-	update := bson.M{"$set": user}
-	opts := options.Update().SetUpsert(true)
-
-	_, err := r.collection.UpdateOne(ctx, filter, update, opts)
-	if err != nil {
-		return fmt.Errorf("clientRepo.SaveUser: failed to save user: %w", err)
-	}
-
-	return nil
-}

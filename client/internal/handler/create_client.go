@@ -7,104 +7,53 @@ import (
 
 	"BulkaVPN/client/countries/germany"
 	"BulkaVPN/client/countries/holland"
-	"BulkaVPN/client/internal"
+	"BulkaVPN/client/internal/repository"
 	pb "BulkaVPN/client/proto"
-	"BulkaVPN/pkg/idstr"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (h *Handler) CreateClient(ctx context.Context, req *pb.CreateClientRequest) (*pb.CreateClientResponse, error) {
-	clientID := idstr.MustNew(8)
 	now := time.Now()
-	timeLeft := now.AddDate(0, 0, 30)
-	timeLeftTrial := now.AddDate(0, 0, 3)
-	selectedCountry := req.CountryServer
+	client, err := h.clientRepo.Get(ctx, repository.ClientGetOpts{TelegramID: req.TelegramId})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch client: %v", err)
+	}
 
-	if req.CountryServer == "Holland, Amsterdam" && req.Trial == "false" {
-		selectedCountry = req.CountryServer
+	// Если клиент не найден, возвращаем ошибку
+	if client == nil {
+		return nil, fmt.Errorf("client with Telegram ID %s does not exist", req.TelegramId)
+	}
 
-		ovpnConfig, err := holland.CreateHollandVPNKey()
+	// Проверка на истекшее или активное время доступа и продление/создание ключа
+	if client.TimeLeft.After(now) {
+		return &pb.CreateClientResponse{
+			OvpnConfig: client.OvpnConfig,
+			ClientId:   client.ClientID,
+			TimeLeft:   timestamppb.New(client.TimeLeft),
+		}, nil
+	} else {
+		client.TimeLeft = now.AddDate(0, 0, 30) // Устанавливаем на 30 дней
+		var ovpnConfig string
+		if req.CountryServer == "Holland, Amsterdam" {
+			ovpnConfig, err = holland.CreateHollandVPNKey()
+		} else if req.CountryServer == "Germany, Frankfurt" {
+			ovpnConfig, err = germany.CreateGermanyVPNKey()
+		}
 		if err != nil {
 			return nil, fmt.Errorf("failed to create VPN key: %v", err)
 		}
 
-		client := &internal.Client{
-			ClientID:       clientID,
-			Ver:            1,
-			ConnectedSince: now,
-			OvpnConfig:     ovpnConfig,
-			CountryServer:  selectedCountry,
-			TimeLeft:       timeLeft,
-		}
+		client.OvpnConfig = ovpnConfig
+		client.CountryServer = req.CountryServer
 
-		if err := h.clientRepo.Create(ctx, client); err != nil {
-			return nil, err
+		if err := h.clientRepo.Update(ctx, client, client.Ver); err != nil {
+			return nil, fmt.Errorf("failed to update client: %v", err)
 		}
 
 		return &pb.CreateClientResponse{
-			OvpnConfig: ovpnConfig,
-			ClientId:   clientID,
-			TimeLeft:   timestamppb.New(timeLeft),
-		}, nil
-
-	}
-
-	if req.CountryServer == "Germany, Frankfurt" && req.Trial == "false" {
-		selectedCountry = req.CountryServer
-
-		ovpnConfig, err := germany.CreateGermanyVPNKey()
-		if err != nil {
-			return nil, fmt.Errorf("failed to create VPN key: %v", err)
-		}
-
-		client := &internal.Client{
-			ClientID:       clientID,
-			Ver:            1,
-			ConnectedSince: now,
-			OvpnConfig:     ovpnConfig,
-			CountryServer:  selectedCountry,
-			TimeLeft:       timeLeft,
-		}
-
-		if err := h.clientRepo.Create(ctx, client); err != nil {
-			return nil, err
-		}
-
-		return &pb.CreateClientResponse{
-			OvpnConfig: ovpnConfig,
-			ClientId:   clientID,
-			TimeLeft:   timestamppb.New(timeLeft),
+			OvpnConfig: client.OvpnConfig,
+			ClientId:   client.ClientID,
+			TimeLeft:   timestamppb.New(client.TimeLeft),
 		}, nil
 	}
-
-	if req.CountryServer == "Holland, Amsterdam" && req.Trial == "true" {
-		selectedCountry = req.CountryServer
-
-		ovpnConfig, err := holland.CreateHollandVPNKey()
-		if err != nil {
-			return nil, fmt.Errorf("failed to create VPN key: %v", err)
-		}
-
-		client := &internal.Client{
-			ClientID:       clientID,
-			Ver:            1,
-			ConnectedSince: now,
-			OvpnConfig:     ovpnConfig,
-			CountryServer:  selectedCountry,
-			TimeLeft:       timeLeftTrial,
-		}
-
-		if err := h.clientRepo.Create(ctx, client); err != nil {
-			return nil, err
-		}
-
-		return &pb.CreateClientResponse{
-			OvpnConfig: ovpnConfig,
-			ClientId:   clientID,
-			TimeLeft:   timestamppb.New(timeLeftTrial),
-		}, nil
-
-	}
-
-	return nil, fmt.Errorf("unsupported country: %s", req.CountryServer)
 }

@@ -8,6 +8,7 @@ import "google/protobuf/timestamp.proto";
 
 service BulkaVPNService {
   rpc CreateClient (CreateClientRequest) returns (CreateClientResponse);
+  rpc CreateTrialClient (CreateTrialClientRequest) returns (CreateTrialClientResponse);
   rpc SearchClients (SearchClientsRequest) returns (SearchClientsResponse);
   rpc DeleteClient (DeleteClientRequest) returns (DeleteClientResponse);
   rpc GetClient (GetClientRequest) returns (GetClientResponse);
@@ -17,12 +18,26 @@ service BulkaVPNService {
 
 message CreateClientRequest {
   string country_server = 1;
-  string trial = 2;
+  bool trial = 2;
+  int64 telegram_id = 3;
 }
 
 message CreateClientResponse {
   string ovpn_config = 1;
   string client_id = 2;
+  google.protobuf.Timestamp time_left = 3;
+}
+
+message CreateTrialClientRequest {
+  string country_server = 1;
+  bool trial = 2;
+  int64 telegram_id = 3;
+  bool start_button = 4;
+}
+
+message CreateTrialClientResponse {
+  string ovpn_config = 1;
+  string country_server = 2;
   google.protobuf.Timestamp time_left = 3;
 }
 
@@ -70,7 +85,9 @@ message CountClientsResponse {
 message Client {
   string client_id = 1;
 
-  int64 ver = 2;
+  string telegram_id = 2;
+
+  int64 ver = 3;
 
   string ovpn_config = 4;
   string country_server = 5;
