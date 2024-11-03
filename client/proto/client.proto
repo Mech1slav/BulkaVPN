@@ -100,4 +100,7 @@ message ClientFilter {
   repeated string client_id = 1;
   repeated string ovpn_config = 2;
   string country_server = 3;
+  int64 telegram_id = 4;
+  bool has_trial_been_used = 6;
+  bool is_trial_active_now = 7;
 }

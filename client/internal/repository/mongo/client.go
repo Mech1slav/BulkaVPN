@@ -57,6 +57,18 @@ func (r *clientRepo) buildFilter(filter *repository.ClientSearchOpts) (bson.D, e
 		f = append(f, bson.E{Key: "country_server", Value: bson.M{"$in": []string{filter.Filter.CountryServer}}})
 	}
 
+	if filter.Filter.TelegramId > 0 {
+		f = append(f, bson.E{Key: "telegram_id", Value: bson.M{"$in": filter.Filter.TelegramId}})
+	}
+
+	if filter.Filter.HasTrialBeenUsed {
+		f = append(f, bson.E{Key: "has_trial_been_used", Value: bson.M{"$in": filter.Filter.HasTrialBeenUsed}})
+	}
+
+	if filter.Filter.IsTrialActiveNow {
+		f = append(f, bson.E{Key: "is_trial_active_now", Value: bson.M{"$in": filter.Filter.IsTrialActiveNow}})
+	}
+
 	return f, nil
 }
 
@@ -78,6 +90,10 @@ func (r *clientRepo) Get(ctx context.Context, opts repository.ClientGetOpts) (*i
 
 	if len(opts.OvpnConfig) > 0 {
 		f = append(f, bson.E{Key: "ovpn_config", Value: bson.M{"$in": []string{opts.OvpnConfig}}})
+	}
+
+	if opts.TelegramID > 0 {
+		f = append(f, bson.E{Key: "telegram_id", Value: bson.M{"$in": []int64{opts.TelegramID}}})
 	}
 
 	var c internal.Client
@@ -124,14 +140,19 @@ func (r *clientRepo) Search(ctx context.Context, opts repository.ClientSearchOpt
 
 func (r *clientRepo) Update(ctx context.Context, client *internal.Client, versionCheck int64) error {
 	filter := bson.M{
-		"client_id": client.ClientID,
-		"ver":       versionCheck - 1,
+		"client_id":   client.ClientID,
+		"ver":         versionCheck - 1,
+		"telegram_id": client.TelegramID,
 	}
 	update := bson.M{
 		"$set": bson.M{
-			"ovpn_config":    client.OvpnConfig,
-			"country_server": client.CountryServer,
-			"ver":            client.Ver,
+			"ovpn_config":         client.OvpnConfig,
+			"country_server":      client.CountryServer,
+			"ver":                 client.Ver,
+			"telegram_id":         client.TelegramID,
+			"time_left":           client.TimeLeft,
+			"has_trial_been_used": client.HasTrialBeenUsed,
+			"is_trial_active_now": client.IsTrialActiveNow,
 		},
 	}
 
