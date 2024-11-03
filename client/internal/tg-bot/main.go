@@ -38,96 +38,123 @@ func main() {
 	}
 
 	for update := range updates {
-		if update.Message == nil {
-			continue
-		}
+		if update.Message != nil {
+			switch update.Message.Text {
+			case "/start":
+				telegramID := update.Message.From.ID
+				req := &pb.CreateTrialClientRequest{
+					TelegramId:  int64(telegramID),
+					StartButton: true,
+				}
+				_, err := client.CreateTrialClient(context.Background(), req)
+				if err != nil {
+					_, err := bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Ошибка создания клиента: "+err.Error()))
+					if err != nil {
+						return
+					}
+					continue
+				}
 
-		switch update.Message.Text {
-		case "/start":
-			telegramID := update.Message.From.ID
-			req := &pb.CreateTrialClientRequest{
-				TelegramId:  int64(telegramID),
-				StartButton: true,
-			}
-
-			_, err := client.CreateTrialClient(context.Background(), req)
-			if err != nil {
-				_, err := bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Ошибка создания клиента: "+err.Error()))
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Главное меню:")
+				msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("Получить тестовый ключ (пробный период 3 дня)", "get_trial_key"),
+					),
+				)
+				_, err = bot.Send(msg)
 				if err != nil {
 					return
 				}
-				continue
-			}
 
-			_, err = bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Добро пожаловать! Вы успешно зарегистрированы."))
-			if err != nil {
-				return
-			}
-
-		case "Получить тестовый ключ (пробный период 3 дня)":
-			telegramID := update.Message.From.ID
-			req := &pb.CreateTrialClientRequest{
-				TelegramId:  int64(telegramID),
-				StartButton: false,
-			}
-
-			resp, err := client.CreateTrialClient(context.Background(), req)
-			if err != nil {
-				_, err := bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, err.Error()))
-				if err != nil {
-					return
-				}
-				continue
-			}
-
-			if resp.CountryServer == "Вы можете выбрать локацию для пробного периода" {
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, resp.CountryServer)
-				buttons := []tgbotapi.KeyboardButton{
-					tgbotapi.NewKeyboardButton("Holland, Amsterdam"),
-					tgbotapi.NewKeyboardButton("Germany, Frankfurt"),
-				}
-				keyboard := tgbotapi.NewReplyKeyboard(buttons)
-				msg.ReplyMarkup = keyboard
-				_, err := bot.Send(msg)
-				if err != nil {
-					return
-				}
-			} else {
-				message := "Ваш текущий пробный ключ: " + resp.OvpnConfig + "\nОсталось времени: " + resp.TimeLeft.AsTime().Sub(time.Now()).String()
-				_, err := bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, message))
+			default:
+				_, err := bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Неизвестная команда"))
 				if err != nil {
 					return
 				}
 			}
+		} else if update.CallbackQuery != nil {
+			// Handle callback query for inline button clicks
+			switch update.CallbackQuery.Data {
+			case "get_trial_key":
+				telegramID := update.CallbackQuery.From.ID
+				req := &pb.CreateTrialClientRequest{
+					TelegramId:  int64(telegramID),
+					StartButton: false,
+				}
+				resp, err := client.CreateTrialClient(context.Background(), req)
+				if err != nil {
+					_, err := bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, "Ошибка: "+err.Error()))
+					if err != nil {
+						return
+					}
+					continue
+				}
 
-		case "Holland, Amsterdam", "Germany, Frankfurt":
-			telegramID := update.Message.From.ID
-			req := &pb.CreateTrialClientRequest{
-				TelegramId:    int64(telegramID),
-				StartButton:   false,
-				Trial:         true,
-				CountryServer: update.Message.Text,
-			}
-
-			resp, err := client.CreateTrialClient(context.Background(), req)
-			if err != nil {
-				_, err := bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Ошибка: "+err.Error()))
+				if resp.CountryServer == "Вы можете выбрать локацию для пробного периода" {
+					msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, resp.CountryServer)
+					msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
+						tgbotapi.NewInlineKeyboardRow(
+							tgbotapi.NewInlineKeyboardButtonData("Holland, Amsterdam", "choose_holland"),
+							tgbotapi.NewInlineKeyboardButtonData("Germany, Frankfurt", "choose_germany"),
+						),
+					)
+					_, err := bot.Send(msg)
+					if err != nil {
+						return
+					}
+				} else {
+					message := "Ваш текущий пробный ключ: " + resp.OvpnConfig + "\nОсталось времени: " + resp.TimeLeft.AsTime().Sub(time.Now()).String()
+					_, err := bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, message))
+					if err != nil {
+						return
+					}
+				}
+				_, err = bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, ""))
 				if err != nil {
 					return
 				}
-				continue
-			}
+			case "choose_holland", "choose_germany":
+				telegramID := update.CallbackQuery.From.ID
+				country := "Holland, Amsterdam"
+				if update.CallbackQuery.Data == "choose_germany" {
+					country = "Germany, Frankfurt"
+				}
 
-			message := "Ваш пробный VPN ключ: " + resp.OvpnConfig + "\nЛокация: " + resp.CountryServer + "\nОсталось времени: 3 дня"
-			_, err = bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, message))
-			if err != nil {
-				return
-			}
+				req := &pb.CreateTrialClientRequest{
+					TelegramId:    int64(telegramID),
+					StartButton:   false,
+					Trial:         true,
+					CountryServer: country,
+				}
+				resp, err := client.CreateTrialClient(context.Background(), req)
+				if err != nil {
+					_, err := bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, "Ошибка: "+err.Error()))
+					if err != nil {
+						return
+					}
+					continue
+				}
 
-		default:
-			_, err := bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Неизвестная команда"))
-			if err != nil {
-				return
+				message := "Ваш пробный VPN ключ: " + resp.OvpnConfig + "\nЛокация: " + resp.CountryServer + "\nОсталось времени: 3 дня"
+				_, err = bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, message))
+				if err != nil {
+					return
+				}
+
+				mainMenu := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Главное меню:")
+				mainMenu.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("Получить тестовый ключ (пробный период 3 дня)", "get_trial_key"),
+					),
+				)
+				_, err = bot.Send(mainMenu)
+				if err != nil {
+					return
+				}
+				_, err = bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, ""))
+				if err != nil {
+					return
+				}
 			}
 		}
 	}
