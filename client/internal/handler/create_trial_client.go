@@ -38,13 +38,6 @@ func (h *Handler) CreateTrialClient(ctx context.Context, req *pb.CreateTrialClie
 		}
 	}
 
-	if !req.StartButton && !req.Trial {
-		client, err := h.clientRepo.Get(ctx, repository.ClientGetOpts{TelegramID: req.TelegramId})
-		if err != nil || client == nil || client.HasTrialBeenUsed {
-			return nil, errors.New("неправильный запрос или пробный период уже использован")
-		}
-	}
-
 	client, err := h.clientRepo.Get(ctx, repository.ClientGetOpts{TelegramID: req.TelegramId})
 	if err != nil || client == nil {
 		return nil, errors.New("client not found")
