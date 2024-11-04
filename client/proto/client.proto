@@ -18,13 +18,13 @@ service BulkaVPNService {
 
 message CreateClientRequest {
   string country_server = 1;
-  bool trial = 2;
-  int64 telegram_id = 3;
+  int64 telegram_id = 2;
+  google.protobuf.Timestamp time_left = 3;
 }
 
 message CreateClientResponse {
   string ovpn_config = 1;
-  string client_id = 2;
+  string country_server = 2;
   google.protobuf.Timestamp time_left = 3;
 }
 

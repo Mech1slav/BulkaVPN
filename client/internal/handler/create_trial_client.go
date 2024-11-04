@@ -79,7 +79,7 @@ func (h *Handler) CreateTrialClient(ctx context.Context, req *pb.CreateTrialClie
 
 			client.OvpnConfig = ovpnConfig
 			client.CountryServer = req.CountryServer
-			client.TimeLeft = now.Add(72 * time.Hour) // Установить срок в 3 дня
+			client.TimeLeft = now.Add(72 * time.Hour)
 			client.HasTrialBeenUsed = true
 			client.IsTrialActiveNow = true
 			client.Ver++
