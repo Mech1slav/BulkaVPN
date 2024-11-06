@@ -60,10 +60,10 @@ func main() {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Главное меню:")
 				msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("Получить тестовый ключ (пробный период 3 дня)", "get_trial_key"),
+						tgbotapi.NewInlineKeyboardButtonData("Получить VPN ключ (тестовый период 3 дня)", "get_trial_key"),
 					),
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("Подключиться / Продлить ключ", "connect_or_extend_key"),
+						tgbotapi.NewInlineKeyboardButtonData("Подключиться / Продлить ключ", "connect_or_extend"),
 					),
 					tgbotapi.NewInlineKeyboardRow(
 						tgbotapi.NewInlineKeyboardButtonData("Мой ключ", "my_key"),
@@ -109,12 +109,12 @@ func main() {
 					continue
 				}
 
-				if resp.CountryServer == "Вы можете выбрать локацию для пробного периода" {
+				if resp.CountryServer == "Вы можете выбрать локацию для тестового периода" {
 					msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, resp.CountryServer)
 					msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 						tgbotapi.NewInlineKeyboardRow(
-							tgbotapi.NewInlineKeyboardButtonData("Holland, Amsterdam", "choose_holland"),
-							tgbotapi.NewInlineKeyboardButtonData("Germany, Frankfurt", "choose_germany"),
+							tgbotapi.NewInlineKeyboardButtonData("Holland, Amsterdam", "choose_holland_trial"),
+							tgbotapi.NewInlineKeyboardButtonData("Germany, Frankfurt", "choose_germany_trial"),
 						),
 					)
 					_, err := bot.Send(msg)
@@ -122,7 +122,7 @@ func main() {
 						return
 					}
 				} else {
-					message := "Ваш текущий пробный ключ: " + resp.OvpnConfig + "\nОсталось времени: " + resp.TimeLeft.AsTime().Sub(time.Now()).String()
+					message := "Ваш VPN ключ: " + resp.OvpnConfig + "\nОсталось времени: " + resp.TimeLeft.AsTime().Sub(time.Now()).String()
 					_, err := bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, message))
 					if err != nil {
 						return
@@ -132,10 +132,10 @@ func main() {
 				if err != nil {
 					return
 				}
-			case "choose_holland", "choose_germany":
+			case "choose_holland_trial", "choose_germany_trial":
 				telegramID := update.CallbackQuery.From.ID
 				country := "Holland, Amsterdam"
-				if update.CallbackQuery.Data == "choose_germany" {
+				if update.CallbackQuery.Data == "choose_germany_trial" {
 					country = "Germany, Frankfurt"
 				}
 
@@ -154,7 +154,7 @@ func main() {
 					continue
 				}
 
-				message := "Ваш пробный VPN ключ: " + resp.OvpnConfig + "\nЛокация: " + resp.CountryServer + "\nОсталось времени: 3 дня"
+				message := "Ваш VPN ключ: " + resp.OvpnConfig + "\nЛокация: " + resp.CountryServer + "\nОсталось времени: 3 дня"
 				_, err = bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, message))
 				if err != nil {
 					return
@@ -163,7 +163,7 @@ func main() {
 				mainMenu := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Главное меню:")
 				mainMenu.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("Получить тестовый ключ (пробный период 3 дня)", "get_trial_key"),
+						tgbotapi.NewInlineKeyboardButtonData("Получить VPN ключ (тестовый период 3 дня)", "get_trial_key"),
 					),
 				)
 				_, err = bot.Send(mainMenu)
@@ -174,18 +174,113 @@ func main() {
 				if err != nil {
 					return
 				}
-			case "connect_or_extend_key":
-				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Вы можете выбрать локацию для подключения (Локацию всегда можно изменить - это бесплатно)")
+			case "connect_or_extend":
+				telegramID := update.CallbackQuery.From.ID
+
+				req := &pb.GetClientRequest{
+					TelegramId: int64(telegramID),
+				}
+
+				resp, err := client.GetClient(context.Background(), req)
+				if err != nil {
+					_, err := bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, "Ошибка: "+err.Error()))
+					if err != nil {
+						return
+					}
+					continue
+				}
+
+				if resp.Clients.OvpnConfig != "" {
+					msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Заметили, что у Вас уже есть VPN ключ. \n\nХотите продлить его или подключить новый? \n\n*При генерации нового ключа - текущий ключ удаляется \n\nУзнать текущий VPN ключ, его локацию и оставшееся время пользования можно ппо кнопке 'Мой ключ' в Главном меню")
+					msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
+						tgbotapi.NewInlineKeyboardRow(
+							tgbotapi.NewInlineKeyboardButtonData("Продлить текущий ключ", "extend_actual"),
+							tgbotapi.NewInlineKeyboardButtonData("Подключить новый ключ", "choose_location"),
+							tgbotapi.NewInlineKeyboardButtonData("Главное меню", "main_menu"),
+						),
+					)
+					_, err := bot.Send(msg)
+					if err != nil {
+						return
+					}
+				}
+
+				if resp.Clients.OvpnConfig == "" {
+					msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Вы можете выбрать локацию для подключения (Локацию всегда можно изменить - это бесплатно)")
+					msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
+						tgbotapi.NewInlineKeyboardRow(
+							tgbotapi.NewInlineKeyboardButtonData("Holland, Amsterdam", "choose_location_holland"),
+							tgbotapi.NewInlineKeyboardButtonData("Germany, Frankfurt", "choose_location_germany"),
+							tgbotapi.NewInlineKeyboardButtonData("Главное меню", "main_menu"),
+						),
+					)
+					_, err := bot.Send(msg)
+					if err != nil {
+						return
+					}
+				}
+			case "extend_actual":
+				telegramID := update.CallbackQuery.From.ID
+
+				req := &pb.GetClientRequest{
+					TelegramId: int64(telegramID),
+				}
+
+				resp, err := client.GetClient(context.Background(), req)
+				if err != nil {
+					_, err := bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, "Ошибка: "+err.Error()))
+					if err != nil {
+						return
+					}
+					continue
+				}
+
+				location := "Holland, Amsterdam"
+				if resp.Clients.CountryServer == "Germany, Frankfurt" {
+					location = "Germany, Frankfurt"
+				}
+
+				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Выберите продолжительность подключения")
 				msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("Holland, Amsterdam", "choose_location_holland"),
-						tgbotapi.NewInlineKeyboardButtonData("Germany, Frankfurt", "choose_location_germany"),
+						tgbotapi.NewInlineKeyboardButtonData("30 дней", "duration_30_days:"+location),
+						tgbotapi.NewInlineKeyboardButtonData("90 дней", "duration_90_days:"+location),
 						tgbotapi.NewInlineKeyboardButtonData("Главное меню", "main_menu"),
 					),
 				)
-				_, err := bot.Send(msg)
+				_, err = bot.Send(msg)
 				if err != nil {
 					return
+				}
+			case "choose_location":
+				telegramID := update.CallbackQuery.From.ID
+
+				req := &pb.DeleteClientRequest{
+					TelegramId: int64(telegramID),
+				}
+
+				resp, err := client.DeleteClient(context.Background(), req)
+				if err != nil {
+					_, err := bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, "Ошибка: "+err.Error()))
+					if err != nil {
+						return
+					}
+					continue
+				}
+
+				if resp.Deleted {
+					msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Вы можете выбрать локацию для подключения (Локацию всегда можно изменить - это бесплатно)")
+					msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
+						tgbotapi.NewInlineKeyboardRow(
+							tgbotapi.NewInlineKeyboardButtonData("Holland, Amsterdam", "choose_location_holland"),
+							tgbotapi.NewInlineKeyboardButtonData("Germany, Frankfurt", "choose_location_germany"),
+							tgbotapi.NewInlineKeyboardButtonData("Главное меню", "main_menu"),
+						),
+					)
+					_, err := bot.Send(msg)
+					if err != nil {
+						return
+					}
 				}
 			case "choose_location_holland", "choose_location_germany":
 				location := "Holland, Amsterdam"
@@ -256,14 +351,136 @@ func main() {
 					return
 				}
 
+			case "my_key":
+				telegramID := update.CallbackQuery.From.ID
+
+				req := &pb.GetClientRequest{
+					TelegramId: int64(telegramID),
+				}
+
+				resp, err := client.GetClient(context.Background(), req)
+				if err != nil {
+					_, err := bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, "Ошибка: "+err.Error()))
+					if err != nil {
+						return
+					}
+					continue
+				}
+
+				messageText := fmt.Sprintf("Ваш VPN ключ: %s\n\nЛокация: %s\n\nОсталось времени: %s",
+					resp.Clients.OvpnConfig, resp.Clients.CountryServer, resp.Clients.TimeLeft.AsTime().Sub(time.Now()).String())
+
+				mainMenuButton := tgbotapi.NewInlineKeyboardButtonData("Главное меню", "main_menu")
+				keyboard := tgbotapi.NewInlineKeyboardMarkup(
+					tgbotapi.NewInlineKeyboardRow(mainMenuButton),
+				)
+
+				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, messageText)
+				msg.ReplyMarkup = keyboard
+				_, err = bot.Send(msg)
+				if err != nil {
+					return
+				}
+
+			case "change_location":
+				telegramID := update.CallbackQuery.From.ID
+
+				req := &pb.GetClientRequest{
+					TelegramId: int64(telegramID),
+				}
+
+				resp, err := client.GetClient(context.Background(), req)
+				if err != nil {
+					_, err := bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, "Ошибка: "+err.Error()))
+					if err != nil {
+						return
+					}
+					continue
+				}
+
+				if resp.Clients.OvpnConfig == "" {
+					msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "У Вас нет активного VPN ключа для смены локации")
+					_, err = bot.Send(msg)
+					if err != nil {
+						return
+					}
+				}
+
+				switch resp.Clients.CountryServer {
+				case "Holland, Amsterdam":
+
+					msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Выберите локацию:")
+					msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
+						tgbotapi.NewInlineKeyboardRow(
+							tgbotapi.NewInlineKeyboardButtonData("Germany, Frankfurt", "update_location_germany"),
+							tgbotapi.NewInlineKeyboardButtonData("Главное меню", "main_menu"),
+						),
+					)
+					_, err = bot.Send(msg)
+					if err != nil {
+						return
+					}
+
+				case "Germany, Frankfurt":
+
+					msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Выберите локацию, ")
+					msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
+						tgbotapi.NewInlineKeyboardRow(
+							tgbotapi.NewInlineKeyboardButtonData("Holland, Amsterdam", "update_location_holland"),
+							tgbotapi.NewInlineKeyboardButtonData("Главное меню", "main_menu"),
+						),
+					)
+					_, err = bot.Send(msg)
+					if err != nil {
+						return
+					}
+				}
+
+			case "update_location_germany", "update_location_holland":
+				telegramID := update.CallbackQuery.From.ID
+
+				location := "Holland, Amsterdam"
+				if update.CallbackQuery.Data == "update_location_germany" {
+					location = "Germany, Frankfurt"
+				}
+
+				req := &pb.UpdateClientRequest{
+					CountryServer: location,
+					TelegramId:    int64(telegramID),
+				}
+
+				resp, err := client.UpdateClient(context.Background(), req)
+				if err != nil {
+					_, err := bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, "Ошибка: "+err.Error()))
+					if err != nil {
+						return
+					}
+					continue
+				}
+
+				messageText := fmt.Sprintf("Ваш новый VPN ключ: %s\n\nЛокация: %s",
+					resp.OvpnConfig, resp.CountryServer)
+
+				mainMenuButton := tgbotapi.NewInlineKeyboardButtonData("Главное меню", "main_menu")
+				keyboard := tgbotapi.NewInlineKeyboardMarkup(
+					tgbotapi.NewInlineKeyboardRow(mainMenuButton),
+				)
+
+				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, messageText)
+				msg.ReplyMarkup = keyboard
+				_, err = bot.Send(msg)
+				if err != nil {
+					return
+				}
+
 			case "main_menu":
 				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Главное меню:")
 				msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("Получить тестовый ключ (пробный период 3 дня)", "get_trial_key"),
+						tgbotapi.NewInlineKeyboardButtonData("Получить VPN ключ (тестовый период 3 дня)", "get_trial_key"),
 					),
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("Подключиться / Продлить ключ", "connect_or_extend_key"),
+						tgbotapi.NewInlineKeyboardButtonData("Подключиться / Продлить ключ", "connect_or_extend"),
 					),
 					tgbotapi.NewInlineKeyboardRow(
 						tgbotapi.NewInlineKeyboardButtonData("Мой ключ", "my_key"),

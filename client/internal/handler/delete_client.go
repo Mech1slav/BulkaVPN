@@ -11,7 +11,9 @@ import (
 )
 
 func (h *Handler) DeleteClient(ctx context.Context, req *pb.DeleteClientRequest) (*pb.DeleteClientResponse, error) {
-	client, err := h.clientRepo.Get(ctx, repository.ClientGetOpts{ClientID: req.ClientId})
+	client, err := h.clientRepo.Get(ctx, repository.ClientGetOpts{
+		TelegramID: req.TelegramId,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("client.Delete: failed to find client in database: %v", err)
 	}
@@ -36,12 +38,17 @@ func (h *Handler) DeleteClient(ctx context.Context, req *pb.DeleteClientRequest)
 		return nil, fmt.Errorf("client.Delete: failed to delete client from VPN service: %v", deleteKeyErr)
 	}
 
+	client.OvpnConfig = ""
+	client.Ver++
+
 	if keyDeleted {
-		err = h.clientRepo.Delete(ctx, req.ClientId)
+		err = h.clientRepo.Update(ctx, client, client.Ver)
 		if err != nil {
-			return nil, fmt.Errorf("client.Delete: failed to delete client from database: %w", err)
+			return nil, fmt.Errorf("client.Delete: failed to update client.OvpnConfig: %w", err)
 		}
-		return &pb.DeleteClientResponse{}, nil
+		return &pb.DeleteClientResponse{
+			Deleted: keyDeleted,
+		}, nil
 	}
 
 	return nil, fmt.Errorf("client.Delete: failed to delete key from VPN service or key was not deleted")

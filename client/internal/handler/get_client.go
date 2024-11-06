@@ -14,6 +14,7 @@ func (h *Handler) GetClient(ctx context.Context, req *pb.GetClientRequest) (*pb.
 	opts := repository.ClientGetOpts{
 		ClientID:   req.ClientId,
 		OvpnConfig: req.OvpnConfig,
+		TelegramID: req.TelegramId,
 	}
 
 	res, err := h.clientRepo.Get(ctx, opts)
