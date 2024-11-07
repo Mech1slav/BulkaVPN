@@ -47,10 +47,12 @@ func (h *Handler) CreateTrialClient(ctx context.Context, req *pb.CreateTrialClie
 		switch {
 		case !client.HasTrialBeenUsed && !client.IsTrialActiveNow:
 			return &pb.CreateTrialClientResponse{
-				CountryServer: "Вы можете выбрать локацию для пробного периода",
+				CountryServer: "Вы можете выбрать локацию для тестового периода",
 			}, nil
 		case client.HasTrialBeenUsed && !client.IsTrialActiveNow:
-			return nil, errors.New("пробный период уже был использован")
+			return &pb.CreateTrialClientResponse{
+				CountryServer: "Тестовый период уже был использован",
+			}, nil
 		case client.IsTrialActiveNow:
 			return &pb.CreateTrialClientResponse{
 				OvpnConfig:    client.OvpnConfig,

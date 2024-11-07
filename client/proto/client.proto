@@ -52,6 +52,7 @@ message SearchClientsResponse {
 message DeleteClientRequest {
   string client_id = 1;
   int64 telegram_id = 2;
+  bool is_trial_active_now = 3;
 }
 
 message DeleteClientResponse {
@@ -96,8 +97,11 @@ message Client {
   string ovpn_config = 4;
   string country_server = 5;
 
-  google.protobuf.Timestamp connected_since = 6;
-  google.protobuf.Timestamp time_left = 7;
+  bool has_trial_been_used = 6;
+  bool is_trial_active_now = 7;
+
+  google.protobuf.Timestamp connected_since = 8;
+  google.protobuf.Timestamp time_left = 9;
 }
 
 message ClientFilter {

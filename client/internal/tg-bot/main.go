@@ -123,6 +123,12 @@ func main() {
 					if err != nil {
 						return
 					}
+				} else if resp.CountryServer == "Тестовый период уже был использован" {
+					message := "Ваш Тестовый период уже был использован"
+					_, err := bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, message))
+					if err != nil {
+						return
+					}
 				} else {
 					message := "Ваш VPN ключ: " + resp.OvpnConfig + "\nОсталось времени: " + resp.TimeLeft.AsTime().Sub(time.Now()).String()
 					_, err := bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, message))
@@ -156,7 +162,7 @@ func main() {
 					continue
 				}
 
-				message := "Ваш VPN ключ: " + resp.OvpnConfig + "\nЛокация: " + resp.CountryServer + "\nОсталось времени: 3 дня"
+				message := "Ваш VPN ключ: " + resp.OvpnConfig + "\nЛокация: " + resp.CountryServer + "\nОсталось времени: " + resp.TimeLeft.AsTime().Sub(time.Now()).String()
 				_, err = bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, message))
 				if err != nil {
 					return
@@ -165,7 +171,7 @@ func main() {
 				mainMenu := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Главное меню:")
 				mainMenu.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("Получить VPN ключ (тестовый период 3 дня)", "get_trial_key"),
+						tgbotapi.NewInlineKeyboardButtonData("Главное меню", "main_menu"),
 					),
 				)
 				_, err = bot.Send(mainMenu)
@@ -527,7 +533,7 @@ func checkClientsTimeLeft(bot *tgbotapi.BotAPI, client pb.BulkaVPNServiceClient)
 			now := time.Now()
 			timeLeft := clients.TimeLeft.AsTime().Sub(now)
 
-			if timeLeft.Hours() <= 96 && timeLeft.Hours() > 24 {
+			if timeLeft.Hours() <= 96 && timeLeft.Hours() > 72 {
 				if !sentNotifications[telegramID].notifiedFourDays {
 					msg := tgbotapi.NewMessage(telegramID, "У Вас осталось четыре дня пользования VPN ключём, рекомендуем заранее продлить ключ для продолжения работы впн")
 					if _, err := bot.Send(msg); err != nil {
@@ -551,13 +557,16 @@ func checkClientsTimeLeft(bot *tgbotapi.BotAPI, client pb.BulkaVPNServiceClient)
 						}{sentNotifications[telegramID].notifiedFourDays, true}
 					}
 				}
-			} else if timeLeft.Hours() <= 0 {
-				req := &pb.DeleteClientRequest{TelegramId: telegramID}
+			} else if timeLeft.Hours() <= 0 && clients.IsTrialActiveNow {
+				req := &pb.DeleteClientRequest{
+					TelegramId:       telegramID,
+					IsTrialActiveNow: clients.IsTrialActiveNow,
+				}
 				_, err := client.DeleteClient(context.Background(), req)
 				if err != nil {
 					log.Printf("Failed to delete client %d: %v", telegramID, err)
 				} else {
-					msg := tgbotapi.NewMessage(telegramID, "Время пользования впн ключем истекло, для продолжения пользования необходимо подключиться заново")
+					msg := tgbotapi.NewMessage(telegramID, "Время пользования VPN ключём истекло, для продолжения пользования необходимо подключиться заново")
 					if _, err := bot.Send(msg); err != nil {
 						log.Printf("Failed to send message to %d: %v", telegramID, err)
 					}

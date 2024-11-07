@@ -38,6 +38,10 @@ func (h *Handler) DeleteClient(ctx context.Context, req *pb.DeleteClientRequest)
 		return nil, fmt.Errorf("client.Delete: failed to delete client from VPN service: %v", deleteKeyErr)
 	}
 
+	if req.IsTrialActiveNow {
+		client.IsTrialActiveNow = false
+	}
+
 	client.OvpnConfig = ""
 	client.Ver++
 
