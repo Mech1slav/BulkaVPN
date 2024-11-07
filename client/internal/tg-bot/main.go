@@ -31,6 +31,8 @@ func main() {
 
 	client := pb.NewBulkaVPNServiceClient(conn)
 
+	go checkClientsTimeLeft(bot, client)
+
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
@@ -504,5 +506,66 @@ func main() {
 				}
 			}
 		}
+	}
+}
+
+func checkClientsTimeLeft(bot *tgbotapi.BotAPI, client pb.BulkaVPNServiceClient) {
+	sentNotifications := make(map[int64]struct {
+		notifiedFourDays bool
+		notifiedOneDay   bool
+	})
+
+	for {
+		resp, err := client.SearchClients(context.Background(), &pb.SearchClientsRequest{})
+		if err != nil {
+			log.Printf("Error fetching clients: %v", err)
+			continue
+		}
+
+		for _, clients := range resp.Clients {
+			telegramID := clients.TelegramId
+			now := time.Now()
+			timeLeft := clients.TimeLeft.AsTime().Sub(now)
+
+			if timeLeft.Hours() <= 96 && timeLeft.Hours() > 24 {
+				if !sentNotifications[telegramID].notifiedFourDays {
+					msg := tgbotapi.NewMessage(telegramID, "У Вас осталось четыре дня пользования VPN ключём, рекомендуем заранее продлить ключ для продолжения работы впн")
+					if _, err := bot.Send(msg); err != nil {
+						log.Printf("Failed to send message to %d: %v", telegramID, err)
+					} else {
+						sentNotifications[telegramID] = struct {
+							notifiedFourDays bool
+							notifiedOneDay   bool
+						}{true, sentNotifications[telegramID].notifiedOneDay}
+					}
+				}
+			} else if timeLeft.Hours() <= 24 && timeLeft.Hours() > 0 {
+				if !sentNotifications[telegramID].notifiedOneDay {
+					msg := tgbotapi.NewMessage(telegramID, "У Вас остался один день пользования VPN ключём, для продолжения работы рекомендуем продлить подключение")
+					if _, err := bot.Send(msg); err != nil {
+						log.Printf("Failed to send message to %d: %v", telegramID, err)
+					} else {
+						sentNotifications[telegramID] = struct {
+							notifiedFourDays bool
+							notifiedOneDay   bool
+						}{sentNotifications[telegramID].notifiedFourDays, true}
+					}
+				}
+			} else if timeLeft.Hours() <= 0 {
+				req := &pb.DeleteClientRequest{TelegramId: telegramID}
+				_, err := client.DeleteClient(context.Background(), req)
+				if err != nil {
+					log.Printf("Failed to delete client %d: %v", telegramID, err)
+				} else {
+					msg := tgbotapi.NewMessage(telegramID, "Время пользования впн ключем истекло, для продолжения пользования необходимо подключиться заново")
+					if _, err := bot.Send(msg); err != nil {
+						log.Printf("Failed to send message to %d: %v", telegramID, err)
+					}
+					delete(sentNotifications, telegramID)
+				}
+			}
+		}
+
+		time.Sleep(10 * time.Minute)
 	}
 }

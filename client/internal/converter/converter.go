@@ -9,6 +9,7 @@ import (
 func Clients(i *internal.Client) *pb.Client {
 	res := &pb.Client{
 		ClientId:       i.ClientID,
+		TelegramId:     i.TelegramID,
 		Ver:            i.Ver,
 		OvpnConfig:     i.OvpnConfig,
 		CountryServer:  i.CountryServer,

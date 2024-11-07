@@ -15,9 +15,12 @@ func (h *Handler) SearchClients(ctx context.Context, req *pb.SearchClientsReques
 		reqClientOpts = &pb.ClientFilter{}
 	} else {
 		reqClientOpts = &pb.ClientFilter{
-			ClientId:      req.Filter.ClientId,
-			OvpnConfig:    req.Filter.OvpnConfig,
-			CountryServer: req.Filter.CountryServer,
+			ClientId:         req.Filter.ClientId,
+			OvpnConfig:       req.Filter.OvpnConfig,
+			CountryServer:    req.Filter.CountryServer,
+			TelegramId:       req.Filter.TelegramId,
+			HasTrialBeenUsed: req.Filter.HasTrialBeenUsed,
+			IsTrialActiveNow: req.Filter.IsTrialActiveNow,
 		}
 	}
 
