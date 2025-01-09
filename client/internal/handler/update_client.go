@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"BulkaVPN/client/countries/germany"
-	"BulkaVPN/client/countries/holland"
 	"BulkaVPN/client/internal/repository"
 	pb "BulkaVPN/client/proto"
+	germany "BulkaVPN/client/protocols/shadowsocks/germany_shadowsocks"
+	holland "BulkaVPN/client/protocols/shadowsocks/holland_shadowsocks"
 )
 
 func (h *Handler) UpdateClient(ctx context.Context, req *pb.UpdateClientRequest) (*pb.UpdateClientResponse, error) {
@@ -27,7 +27,7 @@ func (h *Handler) UpdateClient(ctx context.Context, req *pb.UpdateClientRequest)
 		}
 		if client.CountryServer == "Germany, Frankfurt" {
 			if err := germany.DeleteKeyByConfig(client.OvpnConfig); err != nil {
-				return nil, fmt.Errorf("client.Delete: failed to delete client from germany vpn service: %v", err)
+				return nil, fmt.Errorf("client.Delete: failed to delete client from germany_shadowsocks vpn service: %v", err)
 			}
 		}
 	case "Germany, Frankfurt":
@@ -37,7 +37,7 @@ func (h *Handler) UpdateClient(ctx context.Context, req *pb.UpdateClientRequest)
 		}
 		if client.CountryServer == "Holland, Amsterdam" {
 			if err := holland.DeleteKeyByConfig(client.OvpnConfig); err != nil {
-				return nil, fmt.Errorf("client.Delete: failed to delete client from holland vpn service: %v", err)
+				return nil, fmt.Errorf("client.Delete: failed to delete client from holland_shadowsocks vpn service: %v", err)
 			}
 		}
 	default:

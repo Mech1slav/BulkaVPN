@@ -1,4 +1,4 @@
-package germany
+package germany_shadowsocks
 
 import (
 	"crypto/tls"

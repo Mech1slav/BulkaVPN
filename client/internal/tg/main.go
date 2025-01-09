@@ -6,11 +6,12 @@ import (
 	"log"
 	"time"
 
-	pb "BulkaVPN/client/proto"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	pb "BulkaVPN/client/proto"
 )
 
 func main() {
@@ -74,7 +75,7 @@ func main() {
 						tgbotapi.NewInlineKeyboardButtonData("Сменить локацию", "change_location"),
 					),
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("Все о BALT VPN", "about_vpn"),
+						tgbotapi.NewInlineKeyboardButtonData("Все о BULKA VPN", "about_vpn"),
 					),
 					tgbotapi.NewInlineKeyboardRow(
 						tgbotapi.NewInlineKeyboardButtonData("Помощь", "help"),
@@ -497,7 +498,7 @@ func main() {
 						tgbotapi.NewInlineKeyboardButtonData("Сменить локацию", "change_location"),
 					),
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("Все о BALT VPN", "about_vpn"),
+						tgbotapi.NewInlineKeyboardButtonData("Все о BULKA VPN", "about_vpn"),
 					),
 					tgbotapi.NewInlineKeyboardRow(
 						tgbotapi.NewInlineKeyboardButtonData("Помощь", "help"),

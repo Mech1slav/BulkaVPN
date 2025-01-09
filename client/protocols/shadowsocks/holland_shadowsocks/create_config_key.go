@@ -1,4 +1,4 @@
-package germany
+package holland_shadowsocks
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func CreateGermanyVPNKey() (string, error) {
+func CreateHollandShadowsocksVPNKey() (string, error) {
 	apiURL := Ulr
 	method := "POST"
 

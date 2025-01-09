@@ -1,9 +1,10 @@
 package converter
 
 import (
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"BulkaVPN/client/internal"
 	pb "BulkaVPN/client/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func Clients(i *internal.Client) *pb.Client {
@@ -11,7 +12,7 @@ func Clients(i *internal.Client) *pb.Client {
 		ClientId:         i.ClientID,
 		TelegramId:       i.TelegramID,
 		Ver:              i.Ver,
-		OvpnConfig:       i.OvpnConfig,
+		OvpnConfig:       i.ShadowsocksVPNConfig,
 		CountryServer:    i.CountryServer,
 		HasTrialBeenUsed: i.HasTrialBeenUsed,
 		IsTrialActiveNow: i.IsTrialActiveNow,

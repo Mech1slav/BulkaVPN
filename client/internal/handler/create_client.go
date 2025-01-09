@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	"BulkaVPN/client/countries/germany"
-	"BulkaVPN/client/countries/holland"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"BulkaVPN/client/internal/repository"
 	pb "BulkaVPN/client/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"BulkaVPN/client/protocols/shadowsocks/germany_shadowsocks"
+	"BulkaVPN/client/protocols/shadowsocks/holland_shadowsocks"
 )
 
 func (h *Handler) CreateClient(ctx context.Context, req *pb.CreateClientRequest) (*pb.CreateClientResponse, error) {
@@ -22,9 +23,9 @@ func (h *Handler) CreateClient(ctx context.Context, req *pb.CreateClientRequest)
 	var ovpnConfig string
 	switch req.CountryServer {
 	case "Holland, Amsterdam":
-		ovpnConfig, err = holland.CreateHollandVPNKey()
+		ovpnConfig, err = holland_shadowsocks.CreateHollandVPNKey()
 	case "Germany, Frankfurt":
-		ovpnConfig, err = germany.CreateGermanyVPNKey()
+		ovpnConfig, err = germany_shadowsocks.CreateGermanyVPNKey()
 	default:
 		return nil, fmt.Errorf("unknown server: %v", req.CountryServer)
 	}

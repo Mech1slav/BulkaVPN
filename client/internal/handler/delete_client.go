@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"BulkaVPN/client/countries/germany"
-	"BulkaVPN/client/countries/holland"
 	"BulkaVPN/client/internal/repository"
 	pb "BulkaVPN/client/proto"
+	germany2 "BulkaVPN/client/protocols/shadowsocks/germany_shadowsocks"
+	holland2 "BulkaVPN/client/protocols/shadowsocks/holland_shadowsocks"
 )
 
 func (h *Handler) DeleteClient(ctx context.Context, req *pb.DeleteClientRequest) (*pb.DeleteClientResponse, error) {
@@ -23,12 +23,12 @@ func (h *Handler) DeleteClient(ctx context.Context, req *pb.DeleteClientRequest)
 
 	switch client.CountryServer {
 	case "Germany, Frankfurt":
-		deleteKeyErr = germany.DeleteKeyByConfig(client.OvpnConfig)
-		keyDeleted = germany.GetKey(client.OvpnConfig)
+		deleteKeyErr = germany2.DeleteKeyByConfig(client.OvpnConfig)
+		keyDeleted = germany2.GetKey(client.OvpnConfig)
 
 	case "Holland, Amsterdam":
-		deleteKeyErr = holland.DeleteKeyByConfig(client.OvpnConfig)
-		keyDeleted = holland.GetKey(client.OvpnConfig)
+		deleteKeyErr = holland2.DeleteKeyByConfig(client.OvpnConfig)
+		keyDeleted = holland2.GetKey(client.OvpnConfig)
 
 	default:
 		return nil, fmt.Errorf("client.Delete: unsupported country server: %v", client.CountryServer)
@@ -48,7 +48,7 @@ func (h *Handler) DeleteClient(ctx context.Context, req *pb.DeleteClientRequest)
 	if keyDeleted {
 		err = h.clientRepo.Update(ctx, client, client.Ver)
 		if err != nil {
-			return nil, fmt.Errorf("client.Delete: failed to update client.OvpnConfig: %w", err)
+			return nil, fmt.Errorf("client.Delete: failed to update client.ShadowsocksVPNConfig: %w", err)
 		}
 		return &pb.DeleteClientResponse{
 			Deleted: keyDeleted,

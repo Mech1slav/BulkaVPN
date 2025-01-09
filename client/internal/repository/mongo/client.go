@@ -5,15 +5,16 @@ import (
 	"errors"
 	"fmt"
 
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+
 	"BulkaVPN/client/internal"
 	"BulkaVPN/client/internal/repository"
 	pb "BulkaVPN/client/proto"
 	"BulkaVPN/pkg/errx"
 	"BulkaVPN/pkg/mongox"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type ClientConfig struct {
@@ -146,7 +147,7 @@ func (r *clientRepo) Update(ctx context.Context, client *internal.Client, versio
 	}
 	update := bson.M{
 		"$set": bson.M{
-			"ovpn_config":         client.OvpnConfig,
+			"ovpn_config":         client.ShadowsocksVPNConfig,
 			"country_server":      client.CountryServer,
 			"ver":                 client.Ver,
 			"telegram_id":         client.TelegramID,
