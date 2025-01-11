@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func CreateHollandShadowsocksVPNKey() (string, error) {
+func CreateHollandVPNKey() (string, error) {
 	apiURL := Ulr
 	method := "POST"
 

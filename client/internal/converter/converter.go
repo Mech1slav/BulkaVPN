@@ -12,7 +12,7 @@ func Clients(i *internal.Client) *pb.Client {
 		ClientId:         i.ClientID,
 		TelegramId:       i.TelegramID,
 		Ver:              i.Ver,
-		OvpnConfig:       i.ShadowsocksVPNConfig,
+		OvpnConfig:       i.OvpnConfig,
 		CountryServer:    i.CountryServer,
 		HasTrialBeenUsed: i.HasTrialBeenUsed,
 		IsTrialActiveNow: i.IsTrialActiveNow,

@@ -147,7 +147,7 @@ func (r *clientRepo) Update(ctx context.Context, client *internal.Client, versio
 	}
 	update := bson.M{
 		"$set": bson.M{
-			"ovpn_config":         client.ShadowsocksVPNConfig,
+			"ovpn_config":         client.OvpnConfig,
 			"country_server":      client.CountryServer,
 			"ver":                 client.Ver,
 			"telegram_id":         client.TelegramID,
