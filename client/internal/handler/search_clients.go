@@ -15,12 +15,14 @@ func (h *Handler) SearchClients(ctx context.Context, req *pb.SearchClientsReques
 		reqClientOpts = &pb.ClientFilter{}
 	} else {
 		reqClientOpts = &pb.ClientFilter{
-			ClientId:         req.Filter.ClientId,
-			OvpnConfig:       req.Filter.OvpnConfig,
-			CountryServer:    req.Filter.CountryServer,
-			TelegramId:       req.Filter.TelegramId,
-			HasTrialBeenUsed: req.Filter.HasTrialBeenUsed,
-			IsTrialActiveNow: req.Filter.IsTrialActiveNow,
+			ClientId:                 req.Filter.ClientId,
+			ShadowsocksVpnConfig:     req.Filter.ShadowsocksVpnConfig,
+			CountryServerShadowsocks: req.Filter.CountryServerShadowsocks,
+			VlessVpnConfig:           req.Filter.VlessVpnConfig,
+			CountryServerVless:       req.Filter.CountryServerVless,
+			TelegramId:               req.Filter.TelegramId,
+			HasTrialBeenUsed:         req.Filter.HasTrialBeenUsed,
+			IsTrialActiveNow:         req.Filter.IsTrialActiveNow,
 		}
 	}
 

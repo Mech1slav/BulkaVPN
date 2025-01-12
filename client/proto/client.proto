@@ -17,28 +17,34 @@ service BulkaVPNService {
 }
 
 message CreateClientRequest {
-  string country_server = 1;
-  int64 telegram_id = 2;
-  google.protobuf.Timestamp time_left = 3;
+  string country_server_shadowsocks = 1;
+  string country_server_vless = 2;
+  int64 telegram_id = 3;
+  google.protobuf.Timestamp time_left = 4;
 }
 
 message CreateClientResponse {
-  string ovpn_config = 1;
-  string country_server = 2;
-  google.protobuf.Timestamp time_left = 3;
+  string shadowsocks_vpn_config = 1;
+  string vless_vpn_config = 2;
+  string country_server_shadowsocks = 3;
+  string country_server_vless = 4;
+  google.protobuf.Timestamp time_left = 5;
 }
 
 message CreateTrialClientRequest {
-  string country_server = 1;
-  bool trial = 2;
-  int64 telegram_id = 3;
-  bool start_button = 4;
+  string country_server_shadowsocks = 1;
+  string country_server_vless = 2;
+  bool trial = 3;
+  int64 telegram_id = 4;
+  bool start_button = 5;
 }
 
 message CreateTrialClientResponse {
-  string ovpn_config = 1;
-  string country_server = 2;
-  google.protobuf.Timestamp time_left = 3;
+  string shadowsocks_vpn_config = 1;
+  string vless_vpn_config = 2;
+  string country_server_shadowsocks = 3;
+  string country_server_vless = 4;
+  google.protobuf.Timestamp time_left = 5;
 }
 
 message SearchClientsRequest {
@@ -61,8 +67,9 @@ message DeleteClientResponse {
 
 message GetClientRequest {
   string client_id = 1;
-  string ovpn_config = 2;
-  int64 telegram_id = 3;
+  string shadowsocks_vpn_config = 2;
+  string vless_vpn_config = 3;
+  int64 telegram_id = 4;
 }
 
 message GetClientResponse {
@@ -70,13 +77,16 @@ message GetClientResponse {
 }
 
 message UpdateClientRequest {
-  string country_server = 2;
+  string country_server_shadowsocks = 1;
+  string country_server_vless = 2;
   int64 telegram_id = 3;
 }
 
 message UpdateClientResponse {
-  string country_server = 1;
-  string ovpn_config = 2;
+  string shadowsocks_vpn_config = 1;
+  string vless_vpn_config = 2;
+  string country_server_shadowsocks = 3;
+  string country_server_vless = 4;
 }
 
 message CountClientsRequest {
@@ -94,21 +104,25 @@ message Client {
 
   int64 ver = 3;
 
-  string ovpn_config = 4;
-  string country_server = 5;
+  string shadowsocks_vpn_config = 4;
+  string vless_vpn_config = 5;
+  string country_server_shadowsocks = 6;
+  string country_server_vless = 7;
 
-  bool has_trial_been_used = 6;
-  bool is_trial_active_now = 7;
+  bool has_trial_been_used = 8;
+  bool is_trial_active_now = 9;
 
-  google.protobuf.Timestamp connected_since = 8;
-  google.protobuf.Timestamp time_left = 9;
+  google.protobuf.Timestamp connected_since = 10;
+  google.protobuf.Timestamp time_left = 11;
 }
 
 message ClientFilter {
   repeated string client_id = 1;
-  repeated string ovpn_config = 2;
-  string country_server = 3;
-  int64 telegram_id = 4;
-  bool has_trial_been_used = 6;
-  bool is_trial_active_now = 7;
+  repeated string shadowsocks_vpn_config = 2;
+  repeated string vless_vpn_config = 3;
+  string country_server_shadowsocks = 4;
+  string country_server_vless = 5;
+  int64 telegram_id = 6;
+  bool has_trial_been_used = 7;
+  bool is_trial_active_now = 8;
 }

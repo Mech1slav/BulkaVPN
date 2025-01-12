@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -12,6 +13,7 @@ import (
 	pb "BulkaVPN/client/proto"
 	"BulkaVPN/client/protocols/shadowsocks/germany_shadowsocks"
 	"BulkaVPN/client/protocols/shadowsocks/holland_shadowsocks"
+	"BulkaVPN/client/protocols/vless/holland_vless"
 )
 
 func (h *Handler) CreateClient(ctx context.Context, req *pb.CreateClientRequest) (*pb.CreateClientResponse, error) {
@@ -20,17 +22,27 @@ func (h *Handler) CreateClient(ctx context.Context, req *pb.CreateClientRequest)
 		return nil, errors.New("client not found")
 	}
 
-	var ovpnConfig string
-	switch req.CountryServer {
+	var (
+		shadowsocksVPNConfig string
+		vlessVPNConfig       string
+	)
+	switch req.CountryServerShadowsocks {
 	case "Holland, Amsterdam":
-		ovpnConfig, err = holland_shadowsocks.CreateHollandVPNKey()
+		shadowsocksVPNConfig, err = holland_shadowsocks.CreateHollandVPNKey()
 	case "Germany, Frankfurt":
-		ovpnConfig, err = germany_shadowsocks.CreateGermanyVPNKey()
+		shadowsocksVPNConfig, err = germany_shadowsocks.CreateGermanyVPNKey()
 	default:
-		return nil, fmt.Errorf("unknown server: %v", req.CountryServer)
+		return nil, fmt.Errorf("unknown server: %v", req.CountryServerShadowsocks)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new vpn key: %v", err)
+	}
+
+	switch req.CountryServerVless {
+	case "Holland, Amsterdam":
+		vlessVPNConfig, err = holland_vless.GenerateVPNKey(strconv.FormatInt(req.TelegramId, 10))
+	default:
+		return nil, fmt.Errorf("unknown server: %v", req.CountryServerVless)
 	}
 
 	now := time.Now()
@@ -41,8 +53,10 @@ func (h *Handler) CreateClient(ctx context.Context, req *pb.CreateClientRequest)
 		client.TimeLeft = client.TimeLeft.Add(newTimeLeft.Sub(now))
 	}
 
-	client.OvpnConfig = ovpnConfig
-	client.CountryServer = req.CountryServer
+	client.ShadowsocksVPNConfig = shadowsocksVPNConfig
+	client.VlessVPNConfig = vlessVPNConfig
+	client.CountryServerShadowsocks = req.CountryServerShadowsocks
+	client.CountryServerVless = req.CountryServerVless
 	client.Ver++
 
 	if err := h.clientRepo.Update(ctx, client, client.Ver); err != nil {
@@ -50,8 +64,10 @@ func (h *Handler) CreateClient(ctx context.Context, req *pb.CreateClientRequest)
 	}
 
 	return &pb.CreateClientResponse{
-		OvpnConfig:    client.OvpnConfig,
-		CountryServer: client.CountryServer,
-		TimeLeft:      timestamppb.New(client.TimeLeft),
+		ShadowsocksVpnConfig:     client.ShadowsocksVPNConfig,
+		VlessVpnConfig:           client.VlessVPNConfig,
+		CountryServerShadowsocks: client.CountryServerShadowsocks,
+		CountryServerVless:       client.CountryServerVless,
+		TimeLeft:                 timestamppb.New(client.TimeLeft),
 	}, nil
 }

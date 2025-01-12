@@ -24,7 +24,8 @@ type ClientSearchOpts struct {
 }
 
 type ClientGetOpts struct {
-	ClientID   string
-	OvpnConfig string
-	TelegramID int64
+	ClientID             string
+	ShadowsocksVPNConfig string
+	VlessVPNConfig       string
+	TelegramID           int64
 }

@@ -1,4 +1,4 @@
-package main
+package holland_vless
 
 import (
 	"bytes"
@@ -12,7 +12,6 @@ import (
 )
 
 func DeleteKeyByConfig(clientEmail string) error {
-	// Шаг 1: Логин и получение куки
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	loginBody := map[string]string{"username": username, "password": password}
@@ -49,7 +48,6 @@ func DeleteKeyByConfig(clientEmail string) error {
 	}
 	cookie := parts[0]
 
-	// Шаг 2: Получение списка клиентов
 	req, err = http.NewRequest("GET", fmt.Sprintf("%s/inbounds/list", apiBaseURL), nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request for client list: %v", err)
@@ -102,7 +100,6 @@ func DeleteKeyByConfig(clientEmail string) error {
 		return errors.New("target inbound not found")
 	}
 
-	// Шаг 3: Найти ID клиента по email
 	var settings struct {
 		Clients []struct {
 			Email string `json:"email"`
@@ -124,7 +121,6 @@ func DeleteKeyByConfig(clientEmail string) error {
 		return fmt.Errorf("client with email %s not found", clientEmail)
 	}
 
-	// Шаг 4: Удалить клиента
 	deleteClientURL := fmt.Sprintf("%s/inbounds/1/delClient/%s", apiBaseURL, clientID)
 	req, err = http.NewRequest("POST", deleteClientURL, nil)
 	if err != nil {

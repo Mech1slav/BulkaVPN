@@ -50,12 +50,20 @@ func (r *clientRepo) buildFilter(filter *repository.ClientSearchOpts) (bson.D, e
 		f = append(f, bson.E{Key: "client_id", Value: bson.M{"$in": filter.Filter.ClientId}})
 	}
 
-	if len(filter.Filter.OvpnConfig) > 0 {
-		f = append(f, bson.E{Key: "ovpn_config", Value: bson.M{"$in": filter.Filter.OvpnConfig}})
+	if len(filter.Filter.ShadowsocksVpnConfig) > 0 {
+		f = append(f, bson.E{Key: "shadowsocks_vpn_config", Value: bson.M{"$in": filter.Filter.ShadowsocksVpnConfig}})
 	}
 
-	if len(filter.Filter.CountryServer) > 0 {
-		f = append(f, bson.E{Key: "country_server", Value: bson.M{"$in": []string{filter.Filter.CountryServer}}})
+	if len(filter.Filter.CountryServerShadowsocks) > 0 {
+		f = append(f, bson.E{Key: "country_server_shadowsocks", Value: bson.M{"$in": []string{filter.Filter.CountryServerShadowsocks}}})
+	}
+
+	if len(filter.Filter.VlessVpnConfig) > 0 {
+		f = append(f, bson.E{Key: "vless_vpn_config", Value: bson.M{"$in": filter.Filter.VlessVpnConfig}})
+	}
+
+	if len(filter.Filter.CountryServerVless) > 0 {
+		f = append(f, bson.E{Key: "country_server_vless", Value: bson.M{"$in": []string{filter.Filter.CountryServerVless}}})
 	}
 
 	if filter.Filter.TelegramId > 0 {
@@ -89,8 +97,12 @@ func (r *clientRepo) Get(ctx context.Context, opts repository.ClientGetOpts) (*i
 		f = append(f, bson.E{Key: "client_id", Value: bson.M{"$in": []string{opts.ClientID}}})
 	}
 
-	if len(opts.OvpnConfig) > 0 {
-		f = append(f, bson.E{Key: "ovpn_config", Value: bson.M{"$in": []string{opts.OvpnConfig}}})
+	if len(opts.ShadowsocksVPNConfig) > 0 {
+		f = append(f, bson.E{Key: "shadowsocks_vpn_config", Value: bson.M{"$in": []string{opts.ShadowsocksVPNConfig}}})
+	}
+
+	if len(opts.VlessVPNConfig) > 0 {
+		f = append(f, bson.E{Key: "vless_vpn_config", Value: bson.M{"$in": []string{opts.VlessVPNConfig}}})
 	}
 
 	if opts.TelegramID > 0 {
@@ -147,13 +159,15 @@ func (r *clientRepo) Update(ctx context.Context, client *internal.Client, versio
 	}
 	update := bson.M{
 		"$set": bson.M{
-			"ovpn_config":         client.OvpnConfig,
-			"country_server":      client.CountryServer,
-			"ver":                 client.Ver,
-			"telegram_id":         client.TelegramID,
-			"time_left":           client.TimeLeft,
-			"has_trial_been_used": client.HasTrialBeenUsed,
-			"is_trial_active_now": client.IsTrialActiveNow,
+			"shadowsocks_vpn_config":     client.ShadowsocksVPNConfig,
+			"country_server_shadowsocks": client.CountryServerShadowsocks,
+			"vless_vpn_config":           client.VlessVPNConfig,
+			"country_server_vless":       client.CountryServerVless,
+			"ver":                        client.Ver,
+			"telegram_id":                client.TelegramID,
+			"time_left":                  client.TimeLeft,
+			"has_trial_been_used":        client.HasTrialBeenUsed,
+			"is_trial_active_now":        client.IsTrialActiveNow,
 		},
 	}
 

@@ -1,4 +1,4 @@
-package main
+package holland_vless
 
 import (
 	"bytes"

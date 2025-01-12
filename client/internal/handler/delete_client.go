@@ -3,11 +3,13 @@ package handler
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"BulkaVPN/client/internal/repository"
 	pb "BulkaVPN/client/proto"
-	germany2 "BulkaVPN/client/protocols/shadowsocks/germany_shadowsocks"
-	holland2 "BulkaVPN/client/protocols/shadowsocks/holland_shadowsocks"
+	ssgermany "BulkaVPN/client/protocols/shadowsocks/germany_shadowsocks"
+	ssholland "BulkaVPN/client/protocols/shadowsocks/holland_shadowsocks"
+	vlessholland "BulkaVPN/client/protocols/vless/holland_vless"
 )
 
 func (h *Handler) DeleteClient(ctx context.Context, req *pb.DeleteClientRequest) (*pb.DeleteClientResponse, error) {
@@ -21,17 +23,23 @@ func (h *Handler) DeleteClient(ctx context.Context, req *pb.DeleteClientRequest)
 	var deleteKeyErr error
 	var keyDeleted bool
 
-	switch client.CountryServer {
+	switch client.CountryServerShadowsocks {
 	case "Germany, Frankfurt":
-		deleteKeyErr = germany2.DeleteKeyByConfig(client.OvpnConfig)
-		keyDeleted = germany2.GetKey(client.OvpnConfig)
+		deleteKeyErr = ssgermany.DeleteKeyByConfig(client.ShadowsocksVPNConfig)
+		keyDeleted = ssgermany.GetKey(client.ShadowsocksVPNConfig)
 
 	case "Holland, Amsterdam":
-		deleteKeyErr = holland2.DeleteKeyByConfig(client.OvpnConfig)
-		keyDeleted = holland2.GetKey(client.OvpnConfig)
+		deleteKeyErr = ssholland.DeleteKeyByConfig(client.ShadowsocksVPNConfig)
+		keyDeleted = ssholland.GetKey(client.ShadowsocksVPNConfig)
 
 	default:
-		return nil, fmt.Errorf("client.Delete: unsupported country server: %v", client.CountryServer)
+		return nil, fmt.Errorf("client.Delete: unsupported country server: %v", client.CountryServerShadowsocks)
+	}
+
+	switch client.CountryServerVless {
+	case "Holland, Amsterdam":
+		deleteKeyErr = vlessholland.DeleteKeyByConfig(strconv.FormatInt(client.TelegramID, 10))
+		keyDeleted = vlessholland.GetKeyByConfig(strconv.FormatInt(client.TelegramID, 10))
 	}
 
 	if deleteKeyErr != nil {
@@ -42,7 +50,8 @@ func (h *Handler) DeleteClient(ctx context.Context, req *pb.DeleteClientRequest)
 		client.IsTrialActiveNow = false
 	}
 
-	client.OvpnConfig = ""
+	client.ShadowsocksVPNConfig = ""
+	client.VlessVPNConfig = ""
 	client.Ver++
 
 	if keyDeleted {

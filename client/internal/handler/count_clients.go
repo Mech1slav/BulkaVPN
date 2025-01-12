@@ -14,8 +14,10 @@ func (h *Handler) CountClients(ctx context.Context, req *pb.CountClientsRequest)
 		reqClientOpts = &pb.ClientFilter{}
 	} else {
 		reqClientOpts = &pb.ClientFilter{
-			OvpnConfig:    req.Filter.OvpnConfig,
-			CountryServer: req.Filter.CountryServer,
+			ShadowsocksVpnConfig:     req.Filter.ShadowsocksVpnConfig,
+			VlessVpnConfig:           req.Filter.VlessVpnConfig,
+			CountryServerShadowsocks: req.Filter.CountryServerShadowsocks,
+			CountryServerVless:       req.Filter.CountryServerVless,
 		}
 	}
 

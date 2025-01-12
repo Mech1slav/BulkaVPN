@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -14,6 +15,7 @@ import (
 	pb "BulkaVPN/client/proto"
 	"BulkaVPN/client/protocols/shadowsocks/germany_shadowsocks"
 	"BulkaVPN/client/protocols/shadowsocks/holland_shadowsocks"
+	"BulkaVPN/client/protocols/vless/holland_vless"
 	"BulkaVPN/pkg/idstr"
 )
 
@@ -21,8 +23,8 @@ func (h *Handler) CreateTrialClient(ctx context.Context, req *pb.CreateTrialClie
 	now := time.Now()
 
 	if req.StartButton {
-		client, err := h.clientRepo.Get(ctx, repository.ClientGetOpts{TelegramID: req.TelegramId})
-		if err != nil && client == nil {
+		getClient, err := h.clientRepo.Get(ctx, repository.ClientGetOpts{TelegramID: req.TelegramId})
+		if err != nil && getClient == nil {
 			client := &internal.Client{
 				ID:               primitive.NewObjectID(),
 				TelegramID:       req.TelegramId,
@@ -48,53 +50,67 @@ func (h *Handler) CreateTrialClient(ctx context.Context, req *pb.CreateTrialClie
 		switch {
 		case !client.HasTrialBeenUsed && !client.IsTrialActiveNow:
 			return &pb.CreateTrialClientResponse{
-				CountryServer: "Вы можете выбрать локацию для тестового периода",
+				CountryServerShadowsocks: "Вы можете выбрать локацию для тестового периода",
 			}, nil
 		case client.HasTrialBeenUsed && !client.IsTrialActiveNow:
 			return &pb.CreateTrialClientResponse{
-				CountryServer: "Тестовый период уже был использован",
+				CountryServerShadowsocks: "Тестовый период уже был использован",
 			}, nil
 		case client.IsTrialActiveNow:
 			return &pb.CreateTrialClientResponse{
-				OvpnConfig:    client.OvpnConfig,
-				CountryServer: client.CountryServer,
-				TimeLeft:      timestamppb.New(client.TimeLeft),
+				ShadowsocksVpnConfig:     client.ShadowsocksVPNConfig,
+				VlessVpnConfig:           client.VlessVPNConfig,
+				CountryServerShadowsocks: client.CountryServerShadowsocks,
+				CountryServerVless:       client.CountryServerVless,
+				TimeLeft:                 timestamppb.New(client.TimeLeft),
 			}, nil
 		}
 	}
 
 	if req.Trial {
-		client, err := h.clientRepo.Get(ctx, repository.ClientGetOpts{TelegramID: req.TelegramId})
-		if client.HasTrialBeenUsed == false && client.IsTrialActiveNow == false {
-			var ovpnConfig string
-			switch req.CountryServer {
+		newClient, err2 := h.clientRepo.Get(ctx, repository.ClientGetOpts{TelegramID: req.TelegramId})
+		if newClient.HasTrialBeenUsed == false && newClient.IsTrialActiveNow == false {
+			var (
+				shadowsocksVPNConfig string
+				vlessVPNConfig       string
+			)
+			switch req.CountryServerShadowsocks {
 			case "Holland, Amsterdam":
-				ovpnConfig, err = holland_shadowsocks.CreateHollandVPNKey()
+				shadowsocksVPNConfig, err2 = holland_shadowsocks.CreateHollandVPNKey()
 			case "Germany, Frankfurt":
-				ovpnConfig, err = germany_shadowsocks.CreateGermanyVPNKey()
+				shadowsocksVPNConfig, err2 = germany_shadowsocks.CreateGermanyVPNKey()
 			default:
-				return nil, fmt.Errorf("unknown country server: %v", req.CountryServer)
+				return nil, fmt.Errorf("unknown country server: %v", req.CountryServerShadowsocks)
 			}
 
-			if err != nil {
-				return nil, fmt.Errorf("failed to create VPN key: %v", err)
+			switch req.CountryServerVless {
+			case "Holland, Amsterdam":
+				vlessVPNConfig, err2 = holland_vless.GenerateVPNKey(strconv.FormatInt(req.TelegramId, 10))
 			}
 
-			client.OvpnConfig = ovpnConfig
-			client.CountryServer = req.CountryServer
-			client.TimeLeft = now.Add(72 * time.Hour)
-			client.HasTrialBeenUsed = true
-			client.IsTrialActiveNow = true
-			client.Ver++
+			if err2 != nil {
+				return nil, fmt.Errorf("failed to create VPN key: %v", err2)
+			}
 
-			if err := h.clientRepo.Update(ctx, client, client.Ver); err != nil {
-				return nil, fmt.Errorf("failed to update client: %v", err)
+			newClient.ShadowsocksVPNConfig = shadowsocksVPNConfig
+			newClient.CountryServerShadowsocks = req.CountryServerShadowsocks
+			newClient.VlessVPNConfig = vlessVPNConfig
+			newClient.CountryServerVless = req.CountryServerVless
+			newClient.TimeLeft = now.Add(72 * time.Hour)
+			newClient.HasTrialBeenUsed = true
+			newClient.IsTrialActiveNow = true
+			newClient.Ver++
+
+			if err := h.clientRepo.Update(ctx, newClient, newClient.Ver); err != nil {
+				return nil, fmt.Errorf("failed to update newClient: %v", err)
 			}
 
 			return &pb.CreateTrialClientResponse{
-				OvpnConfig:    ovpnConfig,
-				CountryServer: req.CountryServer,
-				TimeLeft:      timestamppb.New(client.TimeLeft),
+				ShadowsocksVpnConfig:     shadowsocksVPNConfig,
+				CountryServerShadowsocks: req.CountryServerShadowsocks,
+				VlessVpnConfig:           vlessVPNConfig,
+				CountryServerVless:       req.CountryServerVless,
+				TimeLeft:                 timestamppb.New(newClient.TimeLeft),
 			}, nil
 		}
 	}
