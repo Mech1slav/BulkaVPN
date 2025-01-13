@@ -250,13 +250,13 @@ func main() {
 				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Выберите продолжительность подключения")
 				msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("1 месяц (30 дней)", "duration_30_days"),
+						tgbotapi.NewInlineKeyboardButtonData("1 месяц (30 дней) — 149 руб.", "duration_30_days"),
 					),
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("3 месяца (90 дней)", "duration_90_days"),
+						tgbotapi.NewInlineKeyboardButtonData("3 месяца (90 дней) — 399 руб.", "duration_90_days"),
 					),
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("12 месяцев (365 дней)", "duration_365_days"),
+						tgbotapi.NewInlineKeyboardButtonData("12 месяцев (365 дней) — 1449 руб.", "duration_365_days"),
 					),
 					tgbotapi.NewInlineKeyboardRow(
 						tgbotapi.NewInlineKeyboardButtonData("Главное меню", "main_menu"),
@@ -309,13 +309,13 @@ func main() {
 				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Выберите продолжительность подключения")
 				msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("1 месяц (30 дней)", "duration_30_days:"+location),
+						tgbotapi.NewInlineKeyboardButtonData("1 месяц (30 дней) — 149 руб.", "duration_30_days:"+location),
 					),
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("3 месяца (90 дней)", "duration_90_days:"+location),
+						tgbotapi.NewInlineKeyboardButtonData("3 месяца (90 дней) — 399 руб.", "duration_90_days:"+location),
 					),
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("12 месяцев (365 дней)", "duration_365_days:"+location),
+						tgbotapi.NewInlineKeyboardButtonData("12 месяцев (365 дней) — 1449 руб.", "duration_365_days:"+location),
 					),
 					tgbotapi.NewInlineKeyboardRow(
 						tgbotapi.NewInlineKeyboardButtonData("Главное меню", "main_menu"),
