@@ -209,11 +209,15 @@ func main() {
 				}
 
 				if resp.Clients.ShadowsocksVpnConfig != "" || resp.Clients.VlessVpnConfig != "" {
-					msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Заметили, что у Вас уже есть VPN ключ. \n\nХотите продлить его или подключить новый? \n\n*При генерации нового ключа - текущий ключ удаляется \n\nУзнать текущий VPN ключ, его локацию и оставшееся время пользования можно ппо кнопке 'Мой ключ' в Главном меню")
+					msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Заметили, что у Вас уже есть VPN ключ. \n\nХотите продлить его или подключить новый? \n\n*При генерации нового ключа - текущий ключ удаляется \n\nУзнать текущий VPN ключ, его локацию и оставшееся время пользования можно по кнопке 'Мой ключ' в Главном меню")
 					msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 						tgbotapi.NewInlineKeyboardRow(
 							tgbotapi.NewInlineKeyboardButtonData("Продлить текущий ключ", "extend_actual"),
+						),
+						tgbotapi.NewInlineKeyboardRow(
 							tgbotapi.NewInlineKeyboardButtonData("Подключить новый ключ", "choose_location"),
+						),
+						tgbotapi.NewInlineKeyboardRow(
 							tgbotapi.NewInlineKeyboardButtonData("Главное меню", "main_menu"),
 						),
 					)
@@ -228,7 +232,11 @@ func main() {
 					msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 						tgbotapi.NewInlineKeyboardRow(
 							tgbotapi.NewInlineKeyboardButtonData("Holland, Amsterdam", "choose_location_holland"),
+						),
+						tgbotapi.NewInlineKeyboardRow(
 							tgbotapi.NewInlineKeyboardButtonData("Germany, Frankfurt", "choose_location_germany"),
+						),
+						tgbotapi.NewInlineKeyboardRow(
 							tgbotapi.NewInlineKeyboardButtonData("Главное меню", "main_menu"),
 						),
 					)
@@ -243,8 +251,14 @@ func main() {
 				msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 					tgbotapi.NewInlineKeyboardRow(
 						tgbotapi.NewInlineKeyboardButtonData("1 месяц (30 дней)", "duration_30_days"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
 						tgbotapi.NewInlineKeyboardButtonData("3 месяца (90 дней)", "duration_90_days"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
 						tgbotapi.NewInlineKeyboardButtonData("12 месяцев (365 дней)", "duration_365_days"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
 						tgbotapi.NewInlineKeyboardButtonData("Главное меню", "main_menu"),
 					),
 				)
@@ -273,7 +287,11 @@ func main() {
 					msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 						tgbotapi.NewInlineKeyboardRow(
 							tgbotapi.NewInlineKeyboardButtonData("Holland, Amsterdam", "choose_location_holland"),
+						),
+						tgbotapi.NewInlineKeyboardRow(
 							tgbotapi.NewInlineKeyboardButtonData("Germany, Frankfurt", "choose_location_germany"),
+						),
+						tgbotapi.NewInlineKeyboardRow(
 							tgbotapi.NewInlineKeyboardButtonData("Главное меню", "main_menu"),
 						),
 					)
@@ -292,8 +310,14 @@ func main() {
 				msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 					tgbotapi.NewInlineKeyboardRow(
 						tgbotapi.NewInlineKeyboardButtonData("1 месяц (30 дней)", "duration_30_days:"+location),
+					),
+					tgbotapi.NewInlineKeyboardRow(
 						tgbotapi.NewInlineKeyboardButtonData("3 месяца (90 дней)", "duration_90_days:"+location),
+					),
+					tgbotapi.NewInlineKeyboardRow(
 						tgbotapi.NewInlineKeyboardButtonData("12 месяцев (365 дней)", "duration_365_days:"+location),
+					),
+					tgbotapi.NewInlineKeyboardRow(
 						tgbotapi.NewInlineKeyboardButtonData("Главное меню", "main_menu"),
 					),
 				)

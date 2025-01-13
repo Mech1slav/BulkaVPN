@@ -9,20 +9,13 @@ import (
 	"BulkaVPN/pkg/config"
 	"BulkaVPN/pkg/grpcx"
 	"BulkaVPN/pkg/logx"
-	"BulkaVPN/pkg/logx/zap"
 	"BulkaVPN/pkg/mongox"
-	"BulkaVPN/pkg/natsx"
 	"BulkaVPN/pkg/signalx"
-	"BulkaVPN/pkg/tracing"
-	"BulkaVPN/pkg/tracing/jaeger"
 )
 
 type Config struct {
-	Zap        zap.Config
-	Jaeger     jaeger.Config
 	Mongo      mongox.Config
 	GRPCServer grpcx.ServerConfig
-	Nats       natsx.Config
 
 	ClientRepository repomongo.ClientConfig
 
@@ -44,27 +37,13 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	l, err := zap.New(cfg.Zap)
-	if err != nil {
-		return err
-	}
-
+	l := logx.NewSimple()
 	ctx = l.ToCtx(ctx)
-
-	tracer, clean, err := jaeger.New(cfg.Jaeger)
-	if err != nil {
-		return err
-	}
-
-	ctx = tracing.ToCtx(ctx, tracer)
-
-	defer clean()
 
 	mongoDB, clean, err := mongox.New(ctx, cfg.Mongo)
 	if err != nil {
 		return err
 	}
-
 	defer clean()
 
 	clientRepo := repomongo.NewClientRepo(cfg.ClientRepository, mongoDB)
@@ -81,7 +60,6 @@ func run(ctx context.Context) error {
 	if err = srv.Start(ctx, cfg.ClientsAddr); err != nil {
 		return err
 	}
-
 	defer srv.Stop()
 
 	signalx.Wait()
